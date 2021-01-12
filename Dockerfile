@@ -4,7 +4,8 @@
 # docker run --rm -p 5901:5901 -p 6901:6901 test
 
 #Update to at least use 18.04
-FROM ubuntu:18.04
+#FROM ubuntu:18.04 #18.04 has localization problems it seems 
+FROM ubuntu:16.04
 
 ## Connection ports for controlling the UI:
 # VNC port:5901
@@ -71,7 +72,7 @@ RUN \
         # This is necessary for apt to access HTTPS sources: 
         apt-transport-https \
         gnupg-agent \
-        gpg-agent \
+        #not on ubuntu 16(diff name maybe?)gpg-agent \
         gnupg2 \
         ca-certificates \
         build-essential \
@@ -79,7 +80,7 @@ RUN \
         software-properties-common \
         lsof \
         net-tools \
-        libcurl4 \
+        #not on ubuntu 16 (diff name maybe?)libcurl4 \
         curl \
         wget \
         cron \
@@ -267,7 +268,7 @@ ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
 
 
 ### Install xfce UI
-#this probably needs to be ran last 
+#this probably needs to be ran last, maybe not but put here anyways its pretty fast
 RUN $INST_SCRIPTS/xfce_ui.sh
 COPY ./src/common/xfce/ $HOME/
 
