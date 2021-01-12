@@ -1,0 +1,139 @@
+Copied code to put back in dockerfile (to isolate what works)
+
+# This breaks it after tini before Terminal GDebi
+# Install Miniconda: https://repo.continuum.io/miniconda/
+# Also moved DATA SCIENCE BASICS and the Conda Solving Environemnt fix here: 
+# All base conda in one layer brings down image size
+ENV \
+    CONDA_DIR=/opt/conda \
+    PYTHON_VERSION="3.7.7" \
+    CONDA_PYTHON_DIR=/opt/conda/lib/python3.7 \
+    CONDA_VERSION="4.7.12"
+ARG SHA256=a23fcffe97690d3bbcd34cda798c3a3318e0f35d863c5d4aca3fc983fe8450b7
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh -O ${HOME}/miniconda.sh && \
+    echo "${SHA256} ${HOME}/miniconda.sh" | sha256sum -c - && \
+    /bin/bash ~/miniconda.sh -b -p $CONDA_DIR && \
+    export PATH=$CONDA_DIR/bin:$PATH && \
+    rm ~/miniconda.sh && \
+    # Update conda
+    $CONDA_DIR/bin/conda update -y -n base -c defaults conda && \
+    $CONDA_DIR/bin/conda update -y setuptools && \
+    $CONDA_DIR/bin/conda install -y conda-build && \
+    # Add conda forge - Append so that conda forge has lower priority than the main channel
+    $CONDA_DIR/bin/conda config --system --append channels conda-forge && \
+    $CONDA_DIR/bin/conda config --system --set auto_update_conda false && \
+    $CONDA_DIR/bin/conda config --system --set show_channel_urls true && \
+    ## Conda Solving Environment Fix: Turn off channel priority
+    conda config --set channel_priority false && \
+    # Update selected packages - install python 3.7.x
+    $CONDA_DIR/bin/conda install -y --update-all python=$PYTHON_VERSION && \
+    # Link Conda
+    ln -s $CONDA_DIR/bin/python /usr/local/bin/python && \
+    ln -s $CONDA_DIR/bin/conda /usr/bin/conda && \
+    # Update pip
+    $CONDA_DIR/bin/pip install --upgrade pip && \
+    ### DATA SCIENCE BASICS ###
+    ### Install main data science libs
+    # Link Conda - All python are linke to the conda instances 
+    # Linking python 3 crashes conda -> cannot install anyting - remove instead
+    ln -s -f $CONDA_DIR/bin/python /usr/bin/python && \
+    apt-get update && \
+    # upgrade pip
+    pip install --upgrade pip && \
+    conda install -y --update-all nomkl && \
+    conda install -y --update-all \
+            'python='$PYTHON_VERSION \
+            tqdm \
+            pyzmq \
+            cython \
+            graphviz \
+            numpy \
+            matplotlib \
+            scipy \
+            requests \
+            urllib3 \
+            pandas \
+            six \
+            future \
+            protobuf \
+            zlib \
+            boost \
+            psutil \
+            PyYAML \
+            python-crontab \
+            ipykernel \
+            cmake \
+            joblib \
+            Pillow \
+            ipython \
+            notebook \
+            # Selected by library evaluation
+            networkx \
+            click \
+            docutils \
+            imageio \
+            tabulate \
+            flask \
+            dill \
+            regex \
+            toolz \
+            jmespath && \
+    # OpenMPI support
+    apt-get install -y --no-install-recommends libopenmpi-dev openmpi-bin && \
+    # Install numba
+    conda install -y numba && \
+    # libartals == 40MB liblapack-dev == 20 MB
+    apt-get install -y --no-install-recommends liblapack-dev libatlas-base-dev libeigen3-dev libblas-dev && \
+    # pandoc -> installs libluajit -> problem for openresty
+    # HDF5 (19MB)
+    apt-get install -y libhdf5-dev && \
+    ### END DATA SCIENCE BASICS ###
+    # Cleanup - Remove all here since conda is not in path as of now
+    $CONDA_DIR/bin/conda clean -y --packages && \
+    $CONDA_DIR/bin/conda clean -y -a -f  && \
+    $CONDA_DIR/bin/conda build purge-all
+#extra Jupyter stuff 3.49 GIGABYTES WHOOO LAD 
+#this install is 2 gigs
+#try doing some cleanup see what that does
+
+RUN clean-layer.sh
+#after clean up its slightly bigger... 
+
+#more stuff
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+# There is nothing added yet to LD_LIBRARY_PATH, so we can overwrite
+ENV LD_LIBRARY_PATH=$CONDA_DIR/lib 
+
+# Install node.js
+#PLEASE NOTE THAT THE security thing is commented out as well as --allow-unauthenticated
+#THIS IS NOT SERIOUS JUST USE FOR TESTING SIZES
+ARG VERSION=v12.18.0
+ARG DISTRO=linux-x64
+ARG SHA256=2febc2506c298048bfddf896056be6191c1f08716876d960a4990bd63a7fe05a
+RUN \
+    wget --quiet https://nodejs.org/dist/${VERSION}/node-${VERSION}-${DISTRO}.tar.xz -O /tmp/nodejs.tar.xz && \
+    echo "${SHA256} /tmp/nodejs.tar.xz" | sha256sum -c - && \
+    mkdir -p /usr/local/lib/nodejs && \
+    tar -xJvf /tmp/nodejs.tar.xz -C /usr/local/lib/nodejs && \
+    rm  /tmp/nodejs.tar.xz && \
+    export PATH=/usr/local/lib/nodejs/node-$VERSION-$DISTRO/bin:$PATH && \
+    # Install YARN
+    #cat $RESOURCES_PATH/tools/yarn_pubkey.gpg | sudo apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends --allow-unauthenticated yarn && \
+    # Install libxkbfile-dev which is necessary for certain YARN and NPM commands/installs
+    apt-get install -y libxkbfile-dev && \
+    # Install typescript 
+    /usr/local/lib/nodejs/node-$VERSION-$DISTRO/bin/npm install -g typescript && \
+    # Install webpack - 32 MB
+    /usr/local/lib/nodejs/node-$VERSION-$DISTRO/bin/npm install -g webpack && \
+    # Cleanup
+    clean-layer.sh 
+
+ENV PATH=/usr/local/lib/nodejs/node-$VERSION-$DISTRO/bin:$PATH
+
+#after this its 3.65 so ~= 250 extra mbs 
+
+

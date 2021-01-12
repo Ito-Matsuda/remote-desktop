@@ -45,8 +45,8 @@ function instFF() {
             tar xvjf /tmp/firefox.tar.bz2 --strip=1 -C $FF_INST/
             ln -s "$FF_INST/firefox" /usr/bin/firefox
             rm /tmp/firefox.tar.bz2
-            # Create desktop icon
-            printf "[Desktop Entry]\nVersion=1.0\nEncoding=UTF-8\nName=Firefox Web Browser\nComment=Webbrowser\nExec=firefox\nTerminal=false\nX-MultipleArgs=false\nType=Application\nIcon=/usr/lib/firefox/browser/chrome/icons/default/default128.png\nCategories=GNOME;GTK;Network;WebBrowser;\nStartupNotify=true;" > /usr/share/applications/firefox.desktop
+            # Create desktop icon (not sure if this works well)
+            #printf "[Desktop Entry]\nVersion=1.0\nEncoding=UTF-8\nName=Firefox Web Browser\nComment=Webbrowser\nExec=firefox\nTerminal=false\nX-MultipleArgs=false\nType=Application\nIcon=/usr/lib/firefox/browser/chrome/icons/default/default128.png\nCategories=GNOME;GTK;Network;WebBrowser;\nStartupNotify=true;" > /usr/share/applications/firefox.desktop
             # MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/chrome;video/webm;application/x-xpinstall;
             disableUpdate $FF_INST
             exit $?
