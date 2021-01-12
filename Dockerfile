@@ -252,6 +252,20 @@ RUN add-apt-repository ppa:libreoffice/ppa && \
     apt-get install -y libreoffice-help-fr libreoffice-l10n-fr && \
     clean-layer.sh
 
+
+#install french locale. something in maybe tools.sh is messing with this 
+#If this is ran AFTER the xfce ui then main menu stuff does not get translated (like thunar again...)
+RUN \
+    apt-get update && \
+    apt-get install -y locales && \
+    sed -i -e 's/# fr_FR.UTF-8 UTF-8/fr_FR.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=fr_FR.UTF-8 LANGUAGE=fr_FR.UTF-8 && \
+    clean-layer.sh
+ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
+
+
 ### Install xfce UI
 #this probably needs to be ran last 
 RUN $INST_SCRIPTS/xfce_ui.sh
