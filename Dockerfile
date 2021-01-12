@@ -54,17 +54,8 @@ RUN $INST_SCRIPTS/no_vnc.sh
 RUN $INST_SCRIPTS/firefox.sh
 RUN $INST_SCRIPTS/chrome.sh
 
-### Install xfce UI
-RUN $INST_SCRIPTS/xfce_ui.sh
-COPY ./src/common/xfce/ $HOME/
 
-### configure startup #this should probably be ran last?
-RUN $INST_SCRIPTS/libnss_wrapper.sh
-COPY ./src/common/scripts $STARTUPDIR
-RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
-
-
-#Image size currently (after above) = 1.22 GB
+#Image size currently (after above) = 1.22 GB (befiore moving xcfe ui to bottom)
 #up to here is everything that was in the base Blair
 
 #Adding stuff from our current RDESKTOP HERE
@@ -247,13 +238,23 @@ RUN \
     clean-layer.sh
 
 COPY /tools/vs-code-desktop.sh  /tools/vs-code-desktop.sh
-#RUN \
-#    /bin/bash /tools/vs-code-desktop.sh --install && \
+RUN \
+    /bin/bash /tools/vs-code-desktop.sh --install 
     # Cleanup
 #    clean-layer.sh
-RUN ls
+RUN echo "vscode should be installed"
 #now at 4.09 gigs 
 
+
+### Install xfce UI
+#this probably needs to be ran last 
+RUN $INST_SCRIPTS/xfce_ui.sh
+COPY ./src/common/xfce/ $HOME/
+
+### configure startup #this should probably be ran last?
+RUN $INST_SCRIPTS/libnss_wrapper.sh
+COPY ./src/common/scripts $STARTUPDIR
+RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
 
 
 USER 1000

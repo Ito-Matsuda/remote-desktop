@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Name=VsCode
+Exec=/usr/share/code/bin/code
+Icon=/usr/share/code/resources/app/resources/linux/code.png
