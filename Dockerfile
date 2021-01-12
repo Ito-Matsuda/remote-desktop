@@ -4,8 +4,14 @@
 # docker run --rm -p 5901:5901 -p 6901:6901 test
 
 #Update to at least use 18.04
-#FROM ubuntu:18.04 #18.04 has localization problems it seems 
-FROM ubuntu:16.04
+#doesnt work, look into gtk2 vs gtk3 stuff? check out command line apps? check out window managers?
+#FROM ubuntu:18.04
+
+#works
+FROM ubuntu:16.04 
+
+#doesnt work
+#FROM ubuntu:20.04
 
 ## Connection ports for controlling the UI:
 # VNC port:5901
@@ -164,7 +170,7 @@ RUN \
         unzip \
         bzip2 \
         lzop \
-        bsdtar \
+        # doesnt work on ubuntu20 bsdtar \
         zlibc \
         # unpack (almost) everything with one command
         unp \
@@ -185,10 +191,7 @@ RUN wget --quiet https://github.com/krallin/tini/releases/download/v0.18.0/tini 
     RUN clean-layer.sh
 #1.49 gigs
 
-
 #### UP TO HERE IS FINE at 1.57
-
-
 
 # Install Terminal / GDebi (Package Manager) / Glogg (Stream file viewer) & archive tools
 # all these seem to install fine from here to vscode around 500 mbs 
@@ -265,6 +268,9 @@ RUN \
     update-locale LANG=fr_FR.UTF-8 LANGUAGE=fr_FR.UTF-8 && \
     clean-layer.sh
 ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
+
+#Size is around 2.67 gigs
+
 
 
 ### Install xfce UI
