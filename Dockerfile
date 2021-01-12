@@ -59,7 +59,7 @@ RUN $INST_SCRIPTS/chrome.sh
 #up to here is everything that was in the base Blair
 
 #Adding stuff from our current RDESKTOP HERE
-#gpg-agent and libcurl4 may fail rn because the current use is ubuntu 16.04 and this is copied from one that uses 18.04
+#this is around 200 - 300 mbs of install 
 RUN \
     # TODO add repos?
     # add-apt-repository ppa:apt-fast/stable
@@ -190,9 +190,7 @@ RUN wget --quiet https://github.com/krallin/tini/releases/download/v0.18.0/tini 
 
 
 # Install Terminal / GDebi (Package Manager) / Glogg (Stream file viewer) & archive tools
-# all these seem to install fine 
-# This might be just ok, installs some tools so yea 
-#chromium is commented out here but eh 
+# all these seem to install fine from here to vscode around 500 mbs 
 # Discover Tools:
 # https://wiki.ubuntuusers.de/Startseite/
 # https://wiki.ubuntuusers.de/Xfce_empfohlene_Anwendungen/
@@ -237,14 +235,22 @@ RUN \
     apt-get remove -y app-install-data gnome-user-guide && \ 
     clean-layer.sh
 
-COPY /tools/vs-code-desktop.sh  /tools/vs-code-desktop.sh
+#this tools could be better eventually 
+COPY /tools/ /tools/
 RUN \
-    /bin/bash /tools/vs-code-desktop.sh --install 
+    /bin/bash /tools/vs-code-desktop.sh --install && \
     # Cleanup
-#    clean-layer.sh
-RUN echo "vscode should be installed"
-#now at 4.09 gigs 
+    clean-layer.sh
+#now at 2 gigs
 
+#Install Libre office + eye of gnome takes around 500 mbs
+RUN add-apt-repository ppa:libreoffice/ppa && \
+    /bin/bash /tools/emacs.sh && \
+    apt-get install -y eog && \
+    echo "hello" && \
+    apt-get install -y libreoffice-calc libreoffice-gtk3 && \
+    apt-get install -y libreoffice-help-fr libreoffice-l10n-fr && \
+    clean-layer.sh
 
 ### Install xfce UI
 #this probably needs to be ran last 
