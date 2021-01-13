@@ -35,10 +35,6 @@ ENV HOME=/headless \
     VNC_VIEW_ONLY=false
 WORKDIR $HOME
 
-#CLEANUP SCRIPT could add the 'fix-permissions' here as well 
-COPY /src/clean-layer.sh  /usr/bin/clean-layer.sh
-RUN chmod u+x /usr/bin/clean-layer.sh
-
 ### Add all install scripts for further steps
 COPY ./src/common/install/ $INST_SCRIPTS/
 COPY ./src/ubuntu/install/ $INST_SCRIPTS/
@@ -63,124 +59,6 @@ RUN $INST_SCRIPTS/chrome.sh
 
 
 #Image size currently (after above) = 1.22 GB (befiore moving xcfe ui to bottom)
-#up to here is everything that was in the base Blair
-
-#Adding stuff from our current RDESKTOP HERE
-#this is around 200 - 300 mbs of install 
-RUN \
-    # TODO add repos?
-    # add-apt-repository ppa:apt-fast/stable
-    # add-apt-repository 'deb http://security.ubuntu.com/ubuntu xenial-security main'
-    apt-get update --fix-missing && \
-    apt-get install -y sudo apt-utils && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-        # This is necessary for apt to access HTTPS sources: 
-        apt-transport-https \
-        gnupg-agent \
-        #not on ubuntu 16(diff name maybe?)gpg-agent \
-        gnupg2 \
-        ca-certificates \
-        build-essential \
-        pkg-config \
-        software-properties-common \
-        lsof \
-        net-tools \
-        #not on ubuntu 16 (diff name maybe?)libcurl4 \
-        curl \
-        wget \
-        cron \
-        openssl \
-        iproute2 \
-        psmisc \
-        tmux \
-        dpkg-sig \
-        uuid-dev \
-        csh \
-        xclip \
-        clinfo \
-        libgdbm-dev \
-        libncurses5-dev \
-        gawk \
-        # Simplified Wrapper and Interface Generator (5.8MB) - required by lots of py-libs
-        swig \
-        # Graphviz (graph visualization software) (4MB)
-        graphviz libgraphviz-dev \
-        # Terminal multiplexer
-        screen \
-        # Editor
-        nano \
-        # Find files
-        locate \
-        # Dev Tools
-        # sqlite3 \
-        # XML Utils
-        xmlstarlet \
-        #  R*-tree implementation - Required for earthpy, geoviews (3MB)
-        libspatialindex-dev \
-        # Search text and binary files
-        yara \
-        # Minimalistic C client for Redis
-        libhiredis-dev \
-        libleptonica-dev \
-        # GEOS library (3MB)
-        libgeos-dev \
-        # style sheet preprocessor
-        less \
-        # Print dir tree
-        tree \
-        # Bash autocompletion functionality
-        bash-completion \
-        # ping support
-        iputils-ping \
-        # Json Processor
-        jq \
-        rsync \
-        # VCS:
-        git \
-        subversion \
-        jed \
-        # odbc drivers
-        unixodbc unixodbc-dev \
-        # Image support
-        libtiff-dev \
-        libjpeg-dev \
-        libpng-dev \
-        # TODO: no 18.04 installation candidate: libjasper-dev \
-        libglib2.0-0 \
-        libxext6 \
-        libsm6 \
-        libxext-dev \
-        libxrender1 \
-        libzmq3-dev \
-        # protobuffer support
-        protobuf-compiler \
-        libprotobuf-dev \
-        libprotoc-dev \
-        autoconf \
-        automake \
-        libtool \
-        cmake  \
-        fonts-liberation \
-        google-perftools \
-        # Compression Libs
-        # also install rar/unrar? but both are propriatory or unar (40MB)
-        zip \
-        gzip \
-        unzip \
-        bzip2 \
-        lzop \
-        # doesnt work on ubuntu20 bsdtar \
-        zlibc \
-        # unpack (almost) everything with one command
-        unp \
-        libbz2-dev \
-        liblzma-dev \
-        zlib1g-dev && \
-    # configure dynamic linker run-time bindings
-    ldconfig
-RUN clean-layer.sh
-#Image size after this 100 or so installs = 1.49 
 
 
 # TINI
@@ -193,70 +71,6 @@ RUN wget --quiet https://github.com/krallin/tini/releases/download/v0.18.0/tini 
 
 #### UP TO HERE IS FINE at 1.57
 
-# Install Terminal / GDebi (Package Manager) / Glogg (Stream file viewer) & archive tools
-# all these seem to install fine from here to vscode around 500 mbs 
-# Discover Tools:
-# https://wiki.ubuntuusers.de/Startseite/
-# https://wiki.ubuntuusers.de/Xfce_empfohlene_Anwendungen/
-# https://goodies.xfce.org/start
-# https://linux.die.net/man/1/
-RUN \
-    apt-get update && \
-    # Configuration database - required by git kraken / atom and other tools (1MB)
-    apt-get install -y --no-install-recommends gconf2 && \
-    apt-get install -y --no-install-recommends xfce4-terminal && \
-    apt-get install -y --no-install-recommends --allow-unauthenticated xfce4-taskmanager  && \
-    # Install gdebi deb installer installs 
-    apt-get install -y --no-install-recommends gdebi && \
-    # Search for files installs 
-    apt-get install -y --no-install-recommends catfish && \
-    #installs
-    apt-get install -y --no-install-recommends font-manager && \
-    # vs support for thunar
-    apt-get install -y thunar-vcs-plugin && \
-    # Streaming text editor for large files
-    apt-get install -y --no-install-recommends glogg  && \
-    apt-get install -y --no-install-recommends baobab && \
-    # Lightweight text editor
-    apt-get install -y mousepad && \
-    apt-get install -y --no-install-recommends vim && \
-    # Process monitoring
-    apt-get install -y htop && \
-    # Install Archive/Compression Tools: https://wiki.ubuntuusers.de/Archivmanager/
-    apt-get install -y p7zip p7zip-rar && \
-    apt-get install -y --no-install-recommends thunar-archive-plugin && \
-    apt-get install -y xarchiver && \
-    # DB Utils
-    apt-get install -y --no-install-recommends sqlitebrowser && \
-    # Install nautilus and support for sftp mounting
-    apt-get install -y --no-install-recommends nautilus gvfs-backends && \
-    # Install gigolo - Access remote systems
-    apt-get install -y --no-install-recommends gigolo gvfs-bin && \
-    # xfce systemload panel plugin - needs to be activated
-    apt-get install -y --no-install-recommends xfce4-systemload-plugin && \
-    # Leightweight ftp client that supports sftp, http, ...
-    apt-get install -y --no-install-recommends gftp && \
-    apt-get remove -y app-install-data gnome-user-guide && \ 
-    clean-layer.sh
-
-#this tools could be better eventually 
-COPY /tools/ /tools/
-RUN \
-    /bin/bash /tools/vs-code-desktop.sh --install && \
-    # Cleanup
-    clean-layer.sh
-#now at 2 gigs
-
-#Install Libre office + eye of gnome takes around 500 mbs
-RUN add-apt-repository ppa:libreoffice/ppa && \
-    /bin/bash /tools/emacs.sh && \
-    apt-get install -y eog && \
-    echo "hello" && \
-    apt-get install -y libreoffice-calc libreoffice-gtk3 && \
-    apt-get install -y libreoffice-help-fr libreoffice-l10n-fr && \
-    clean-layer.sh
-
-
 #install french locale. something in maybe tools.sh is messing with this 
 #If this is ran AFTER the xfce ui then main menu stuff does not get translated (like thunar again...)
 RUN \
@@ -267,10 +81,7 @@ RUN \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=fr_FR.UTF-8 LANGUAGE=fr_FR.UTF-8 && \
     clean-layer.sh
-#ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
-
-#Size is around 2.67 gigs
-
+ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
 
 
 ### Install xfce UI
