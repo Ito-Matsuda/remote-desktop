@@ -7,7 +7,7 @@
 #doesnt work, look into gtk2 vs gtk3 stuff? check out command line apps? check out window managers?
 #FROM ubuntu:18.04
 
-#works
+#works version is = xfce4.12 
 FROM ubuntu:16.04 
 
 #doesnt work
@@ -267,7 +267,7 @@ RUN \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=fr_FR.UTF-8 LANGUAGE=fr_FR.UTF-8 && \
     clean-layer.sh
-ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
+#ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
 
 #Size is around 2.67 gigs
 
