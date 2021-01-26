@@ -2,10 +2,19 @@
 # This is completely taken from https://github.com/ConSol/docker-headless-vnc-container
 #with minor edits / commented out things. This setup is pretty minimal 
 # docker run --rm -p 5901:5901 -p 6901:6901 test
+# http://localhost:6901/?password=vncpassword 
+#can take mo files from here (16.04) version and place it in ours to use. 
 
 #Update to at least use 18.04
-#FROM ubuntu:18.04 #18.04 has localization problems it seems 
-FROM ubuntu:16.04
+#doesnt work, look into gtk2 vs gtk3 stuff? check out command line apps? check out window managers?
+FROM ubuntu:18.04
+
+#works version is = xfce4.12 
+#FROM ubuntu:16.04 
+
+#doesnt work, but try updating xfce to 4.16
+#ubuntu 20.04 seems to have up to 4.14 on the traditional apt get. 
+#FROM ubuntu:20.04
 
 ## Connection ports for controlling the UI:
 # VNC port:5901
@@ -29,256 +38,100 @@ ENV HOME=/headless \
     VNC_VIEW_ONLY=false
 WORKDIR $HOME
 
-#CLEANUP SCRIPT could add the 'fix-permissions' here as well 
-COPY /src/clean-layer.sh  /usr/bin/clean-layer.sh
-RUN chmod u+x /usr/bin/clean-layer.sh
-
 ### Add all install scripts for further steps
 COPY ./src/common/install/ $INST_SCRIPTS/
 COPY ./src/ubuntu/install/ $INST_SCRIPTS/
 #probably just adds execute? 
 RUN find $INST_SCRIPTS -name '*.sh' -exec chmod a+x {} +
 
-### Install some common tools
-RUN $INST_SCRIPTS/tools.sh
-#this changes based on our thing 
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
-
-### Install custom fonts
-RUN $INST_SCRIPTS/install_custom_fonts.sh
-
-### Install xvnc-server & noVNC - HTML5 based VNC viewer
-RUN $INST_SCRIPTS/tigervnc.sh
-RUN $INST_SCRIPTS/no_vnc.sh
-
-### Install firefox and chrome browser
-RUN $INST_SCRIPTS/firefox.sh
-RUN $INST_SCRIPTS/chrome.sh
-
-
-#Image size currently (after above) = 1.22 GB (befiore moving xcfe ui to bottom)
-#up to here is everything that was in the base Blair
-
-#Adding stuff from our current RDESKTOP HERE
-#this is around 200 - 300 mbs of install 
 RUN \
     # TODO add repos?
     # add-apt-repository ppa:apt-fast/stable
     # add-apt-repository 'deb http://security.ubuntu.com/ubuntu xenial-security main'
     apt-get update --fix-missing && \
-    apt-get install -y sudo apt-utils && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends \
-        # This is necessary for apt to access HTTPS sources: 
-        apt-transport-https \
-        gnupg-agent \
-        #not on ubuntu 16(diff name maybe?)gpg-agent \
-        gnupg2 \
-        ca-certificates \
-        build-essential \
-        pkg-config \
-        software-properties-common \
-        lsof \
-        net-tools \
-        #not on ubuntu 16 (diff name maybe?)libcurl4 \
-        curl \
-        wget \
-        cron \
-        openssl \
-        iproute2 \
-        psmisc \
-        tmux \
-        dpkg-sig \
-        uuid-dev \
-        csh \
-        xclip \
-        clinfo \
-        libgdbm-dev \
-        libncurses5-dev \
-        gawk \
-        # Simplified Wrapper and Interface Generator (5.8MB) - required by lots of py-libs
-        swig \
-        # Graphviz (graph visualization software) (4MB)
-        graphviz libgraphviz-dev \
-        # Terminal multiplexer
-        screen \
-        # Editor
-        nano \
-        # Find files
-        locate \
-        # Dev Tools
-        # sqlite3 \
-        # XML Utils
-        xmlstarlet \
-        #  R*-tree implementation - Required for earthpy, geoviews (3MB)
-        libspatialindex-dev \
-        # Search text and binary files
-        yara \
-        # Minimalistic C client for Redis
-        libhiredis-dev \
-        libleptonica-dev \
-        # GEOS library (3MB)
-        libgeos-dev \
-        # style sheet preprocessor
-        less \
-        # Print dir tree
-        tree \
-        # Bash autocompletion functionality
-        bash-completion \
-        # ping support
-        iputils-ping \
-        # Json Processor
-        jq \
-        rsync \
-        # VCS:
-        git \
-        subversion \
-        jed \
-        # odbc drivers
-        unixodbc unixodbc-dev \
-        # Image support
-        libtiff-dev \
-        libjpeg-dev \
-        libpng-dev \
-        # TODO: no 18.04 installation candidate: libjasper-dev \
-        libglib2.0-0 \
-        libxext6 \
-        libsm6 \
-        libxext-dev \
-        libxrender1 \
-        libzmq3-dev \
-        # protobuffer support
-        protobuf-compiler \
-        libprotobuf-dev \
-        libprotoc-dev \
-        autoconf \
-        automake \
-        libtool \
-        cmake  \
-        fonts-liberation \
-        google-perftools \
-        # Compression Libs
-        # also install rar/unrar? but both are propriatory or unar (40MB)
-        zip \
-        gzip \
-        unzip \
-        bzip2 \
-        lzop \
-        bsdtar \
-        zlibc \
-        # unpack (almost) everything with one command
-        unp \
-        libbz2-dev \
-        liblzma-dev \
-        zlib1g-dev && \
-    # configure dynamic linker run-time bindings
-    ldconfig
-RUN clean-layer.sh
-#Image size after this 100 or so installs = 1.49 
+    apt-get install -y sudo apt-utils
 
+### Install some common tools
+#This seems fine. 
+RUN $INST_SCRIPTS/tools.sh
+#ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-# TINI
-ARG SHA256=12d20136605531b09a2c2dac02ccee85e1b874eb322ef6baf7561cd93f93c855
-RUN wget --quiet https://github.com/krallin/tini/releases/download/v0.18.0/tini -O /tini && \
-    echo "${SHA256} /tini" | sha256sum -c - && \
-    chmod +x /tini
-    RUN clean-layer.sh
-#1.49 gigs
+RUN apt-get update \
+    && apt -y install language-pack-fr \
+    && apt -y install thunar-data \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y locales \
+    && locale-gen fr_FR.UTF-8 \
+    && dpkg-reconfigure --frontend=noninteractive locales \
+    && update-locale LANG=fr_FR.UTF-8
+ENV LANG fr_FR.UTF-8
+ENV LC_ALL fr_FR.UTF-8
+ 
 
+### Install custom fonts
+#Seems fine
+RUN $INST_SCRIPTS/install_custom_fonts.sh
 
-#### UP TO HERE IS FINE at 1.57
-
-
-
-# Install Terminal / GDebi (Package Manager) / Glogg (Stream file viewer) & archive tools
-# all these seem to install fine from here to vscode around 500 mbs 
-# Discover Tools:
-# https://wiki.ubuntuusers.de/Startseite/
-# https://wiki.ubuntuusers.de/Xfce_empfohlene_Anwendungen/
-# https://goodies.xfce.org/start
-# https://linux.die.net/man/1/
-RUN \
-    apt-get update && \
-    # Configuration database - required by git kraken / atom and other tools (1MB)
-    apt-get install -y --no-install-recommends gconf2 && \
-    apt-get install -y --no-install-recommends xfce4-terminal && \
-    apt-get install -y --no-install-recommends --allow-unauthenticated xfce4-taskmanager  && \
-    # Install gdebi deb installer installs 
-    apt-get install -y --no-install-recommends gdebi && \
-    # Search for files installs 
-    apt-get install -y --no-install-recommends catfish && \
-    #installs
-    apt-get install -y --no-install-recommends font-manager && \
-    # vs support for thunar
-    apt-get install -y thunar-vcs-plugin && \
-    # Streaming text editor for large files
-    apt-get install -y --no-install-recommends glogg  && \
-    apt-get install -y --no-install-recommends baobab && \
-    # Lightweight text editor
-    apt-get install -y mousepad && \
-    apt-get install -y --no-install-recommends vim && \
-    # Process monitoring
-    apt-get install -y htop && \
-    # Install Archive/Compression Tools: https://wiki.ubuntuusers.de/Archivmanager/
-    apt-get install -y p7zip p7zip-rar && \
-    apt-get install -y --no-install-recommends thunar-archive-plugin && \
-    apt-get install -y xarchiver && \
-    # DB Utils
-    apt-get install -y --no-install-recommends sqlitebrowser && \
-    # Install nautilus and support for sftp mounting
-    apt-get install -y --no-install-recommends nautilus gvfs-backends && \
-    # Install gigolo - Access remote systems
-    apt-get install -y --no-install-recommends gigolo gvfs-bin && \
-    # xfce systemload panel plugin - needs to be activated
-    apt-get install -y --no-install-recommends xfce4-systemload-plugin && \
-    # Leightweight ftp client that supports sftp, http, ...
-    apt-get install -y --no-install-recommends gftp && \
-    apt-get remove -y app-install-data gnome-user-guide && \ 
-    clean-layer.sh
-
-#this tools could be better eventually 
-COPY /tools/ /tools/
-RUN \
-    /bin/bash /tools/vs-code-desktop.sh --install && \
-    # Cleanup
-    clean-layer.sh
-#now at 2 gigs
-
-#Install Libre office + eye of gnome takes around 500 mbs
-RUN add-apt-repository ppa:libreoffice/ppa && \
-    /bin/bash /tools/emacs.sh && \
-    apt-get install -y eog && \
-    echo "hello" && \
-    apt-get install -y libreoffice-calc libreoffice-gtk3 && \
-    apt-get install -y libreoffice-help-fr libreoffice-l10n-fr && \
-    clean-layer.sh
-
+### Install xvnc-server & noVNC - HTML5 based VNC viewer
+#seems fine, albeit maybe could be updated with a more recent version. 
+RUN $INST_SCRIPTS/tigervnc.sh
+RUN $INST_SCRIPTS/no_vnc.sh
 
 #install french locale. something in maybe tools.sh is messing with this 
 #If this is ran AFTER the xfce ui then main menu stuff does not get translated (like thunar again...)
-RUN \
-    apt-get update && \
-    apt-get install -y locales && \
-    sed -i -e 's/# fr_FR.UTF-8 UTF-8/fr_FR.UTF-8 UTF-8/' /etc/locale.gen && \
-    locale-gen && \
-    dpkg-reconfigure --frontend=noninteractive locales && \
-    update-locale LANG=fr_FR.UTF-8 LANGUAGE=fr_FR.UTF-8 && \
-    clean-layer.sh
-ENV LANG='fr_FR.UTF-8' LANGUAGE='fr_FR.UTF-8'
 
+
+RUN echo "\n HELLO \n"
+RUN apt-get update && \
+    apt-cache show xfce4
+#this apt cache shows 4.14
+RUN echo "\n HELLO \n"
+#0.8.9.1-1 (matches online) for xfce4-terminal and 353-lubuntul (matches online) for xterm
+RUN apt-cache show xfce4-terminal && \
+    apt-cache show xterm
 
 ### Install xfce UI
 #this probably needs to be ran last, maybe not but put here anyways its pretty fast
+#are you telling me that apt-get install -y supervisor xfce4 xfce4-terminal xterm only gets 4.12? I know 4.14 exists 
 RUN $INST_SCRIPTS/xfce_ui.sh
+
 COPY ./src/common/xfce/ $HOME/
 
 ### configure startup #this should probably be ran last?
+#libnss fine 
 RUN $INST_SCRIPTS/libnss_wrapper.sh
 COPY ./src/common/scripts $STARTUPDIR
+#again fine 
 RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
 
+### Install firefox and chrome browser
+#also seems fine 
+COPY src/temp/firefox.sh $INST_SCRIPTS/firefox.sh
+#RUN chmod +X $INST_SCRIPTS/firefox.sh
+#probably just adds execute? 
+RUN find $INST_SCRIPTS -name '*.sh' -exec chmod a+x {} +
+RUN $INST_SCRIPTS/firefox.sh
+#COPY src/temp/langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/browser/features/
+#WGET this instead
+#COPY src/temp/langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/distribution/extensions/
+RUN wget https://ftp.mozilla.org/pub/firefox/releases/78.6.1esr/linux-x86_64/xpi/fr.xpi -O langpack-fr@firefox.mozilla.org.xpi && \
+    mkdir --parents /usr/lib/firefox/distribution/extensions/ && \
+    mv langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/distribution/extensions/
+#COPY /langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/distribution/extensions/
+
+
+#auto config
+COPY src/temp/autoconfig.js /usr/lib/firefox/defaults/pref/
+COPY src/temp/firefox.cfg /usr/lib/firefox/
+
+#RUN $INST_SCRIPTS/chrome.sh
+
+#RUN apt-get install firefox-locale-fr
+
+ENV LANGUAGE=fr_FR.UTF-8
+ENV otherlang=fr
 
 USER 1000
 
+#fine 
 ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
 CMD ["--wait"]
