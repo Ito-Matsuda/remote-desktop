@@ -137,3 +137,35 @@ ENV PATH=/usr/local/lib/nodejs/node-$VERSION-$DISTRO/bin:$PATH
 #after this its 3.65 so ~= 250 extra mbs 
 
 
+------------------------------ just pip / conda?
+#Pip and conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh -O ${HOME}/miniconda.sh && \
+    echo "${SHA256} ${HOME}/miniconda.sh" | sha256sum -c - && \
+    /bin/bash ~/miniconda.sh -b -p $CONDA_DIR && \
+    export PATH=$CONDA_DIR/bin:$PATH && \
+    rm ~/miniconda.sh && \
+    # Update conda
+    $CONDA_DIR/bin/conda update -y -n base -c defaults conda && \
+    $CONDA_DIR/bin/conda update -y setuptools && \
+    $CONDA_DIR/bin/conda install -y conda-build && \
+    # Add conda forge - Append so that conda forge has lower priority than the main channel
+    $CONDA_DIR/bin/conda config --system --append channels conda-forge && \
+    $CONDA_DIR/bin/conda config --system --set auto_update_conda false && \
+    $CONDA_DIR/bin/conda config --system --set show_channel_urls true && \
+    ## Conda Solving Environment Fix: Turn off channel priority
+    conda config --set channel_priority false && \
+    # Update selected packages - install python 3.7.x
+    $CONDA_DIR/bin/conda install -y --update-all python=$PYTHON_VERSION && \
+    # Link Conda
+    ln -s $CONDA_DIR/bin/python /usr/local/bin/python && \
+    ln -s $CONDA_DIR/bin/conda /usr/bin/conda && \
+    # Update pip
+    $CONDA_DIR/bin/pip install --upgrade pip && \
+    ### DATA SCIENCE BASICS ###
+    ### Install main data science libs
+    # Link Conda - All python are linke to the conda instances 
+    # Linking python 3 crashes conda -> cannot install anyting - remove instead
+    ln -s -f $CONDA_DIR/bin/python /usr/bin/python && \
+    apt-get update && \
+    # upgrade pip
+    pip install --upgrade pip 

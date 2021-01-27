@@ -54,21 +54,16 @@ RUN \
 ### Install some common tools
 #This seems fine. 
 RUN $INST_SCRIPTS/tools.sh
-#ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
 RUN apt-get update \
     && apt -y install language-pack-fr \
     && apt -y install thunar-data \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y locales \
     && locale-gen fr_FR.UTF-8 \
-    && dpkg-reconfigure --frontend=noninteractive locales \
-    && update-locale LANG=fr_FR.UTF-8
-ENV LANG fr_FR.UTF-8
-ENV LC_ALL fr_FR.UTF-8
- 
+    && dpkg-reconfigure --frontend=noninteractive locales
 
 ### Install custom fonts
-#Seems fine
 RUN $INST_SCRIPTS/install_custom_fonts.sh
 
 ### Install xvnc-server & noVNC - HTML5 based VNC viewer
@@ -76,59 +71,34 @@ RUN $INST_SCRIPTS/install_custom_fonts.sh
 RUN $INST_SCRIPTS/tigervnc.sh
 RUN $INST_SCRIPTS/no_vnc.sh
 
-#install french locale. something in maybe tools.sh is messing with this 
-#If this is ran AFTER the xfce ui then main menu stuff does not get translated (like thunar again...)
-
-
-RUN echo "\n HELLO \n"
-RUN apt-get update && \
-    apt-cache show xfce4
-#this apt cache shows 4.14
-RUN echo "\n HELLO \n"
-#0.8.9.1-1 (matches online) for xfce4-terminal and 353-lubuntul (matches online) for xterm
-RUN apt-cache show xfce4-terminal && \
-    apt-cache show xterm
-
-### Install xfce UI
-#this probably needs to be ran last, maybe not but put here anyways its pretty fast
-#are you telling me that apt-get install -y supervisor xfce4 xfce4-terminal xterm only gets 4.12? I know 4.14 exists 
-RUN $INST_SCRIPTS/xfce_ui.sh
-
-COPY ./src/common/xfce/ $HOME/
-
-### configure startup #this should probably be ran last?
-#libnss fine 
-RUN $INST_SCRIPTS/libnss_wrapper.sh
-COPY ./src/common/scripts $STARTUPDIR
-#again fine 
-RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
-
 ### Install firefox and chrome browser
 #also seems fine 
 COPY src/temp/firefox.sh $INST_SCRIPTS/firefox.sh
-#RUN chmod +X $INST_SCRIPTS/firefox.sh
-#probably just adds execute? 
+RUN $INST_SCRIPTS/chrome.sh
 RUN find $INST_SCRIPTS -name '*.sh' -exec chmod a+x {} +
 RUN $INST_SCRIPTS/firefox.sh
-#COPY src/temp/langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/browser/features/
-#WGET this instead
-#COPY src/temp/langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/distribution/extensions/
+
 RUN wget https://ftp.mozilla.org/pub/firefox/releases/78.6.1esr/linux-x86_64/xpi/fr.xpi -O langpack-fr@firefox.mozilla.org.xpi && \
     mkdir --parents /usr/lib/firefox/distribution/extensions/ && \
     mv langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/distribution/extensions/
-#COPY /langpack-fr@firefox.mozilla.org.xpi /usr/lib/firefox/distribution/extensions/
-
 
 #auto config
 COPY src/temp/autoconfig.js /usr/lib/firefox/defaults/pref/
 COPY src/temp/firefox.cfg /usr/lib/firefox/
 
-#RUN $INST_SCRIPTS/chrome.sh
+### Install xfce UI
+RUN $INST_SCRIPTS/xfce_ui.sh
+COPY ./src/common/xfce/ $HOME/
 
-#RUN apt-get install firefox-locale-fr
+### configure startup #this should probably be ran last?
+RUN $INST_SCRIPTS/libnss_wrapper.sh
+COPY ./src/common/scripts $STARTUPDIR
+RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
 
-ENV LANGUAGE=fr_FR.UTF-8
-ENV otherlang=fr
+#working
+
+#ENV LANGUAGE=fr_FR.UTF-8
+#ENV otherlang=fr
 
 USER 1000
 
